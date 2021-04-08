@@ -1,26 +1,28 @@
-use std::{thread, time};
-use rand_distr::{Normal, Distribution};
-use rand;
-use libxdo::XDo;
 
+pub mod clicker {
+    use std::{thread, time};
+    use rand_distr::{Normal, Distribution};
+    use rand;
+    use libxdo::XDo;
 
-mod clicker {
     const ONE_SEC_IN_MICROS : f64 = 1_000_000f64;
+    
     /* Clicker that clicks at a normal distribution */
-    pub struct clicker {
-        doer       : Xdo,
-        sleep_dist : Normal,
-        period_min : f64,
+    pub struct Clicker {
+        doer      : XDo,
+        sleep_dist: Normal<f64>,
+        period_min: f64,
     }
 
-    impl clicker {
-        pub fn new(freq_mean : f64, freq_sd : f64, freq_min : f64) -> clicker {
+    impl Clicker {
+        pub fn new(freq_mean : f64, period_sd_proportion : f64, max_sds : f64) 
+               -> Clicker {
             let period_mean = ONE_SEC_IN_MICROS / freq_mean;
-            let period_sd   = ONE_SEC_IN_MICROS / freq_sd;
-            struct clicker {
-                Xdo        : XDo::new(None).expect("Init fail"),
-                normal     : Normal::new(period_mean, period_sd),
-                period_min : ONE_SEC_IN_MICROS / freq_min,
+            let period_sd   = period_mean * period_sd_proportion;
+            Clicker {
+                doer      : XDo::new(None).expect("Init fail"),
+                sleep_dist: Normal::new(period_mean, period_sd).unwrap(),
+                period_min: period_mean - period_sd * max_sds,
             }
         }
         pub fn sleep_and_click(&self) {
