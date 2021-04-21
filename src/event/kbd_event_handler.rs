@@ -6,7 +6,6 @@ use std::{
     sync::{Arc, Mutex},
     cell::RefCell,
     thread,
-    assert,
 };
 
 use libc::input_event;

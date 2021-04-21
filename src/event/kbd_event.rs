@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    debug_assert, result,
+    debug_assert,
     sync::{Arc, Mutex},
     thread,
     cell::RefCell,

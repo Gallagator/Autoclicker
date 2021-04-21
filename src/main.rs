@@ -1,38 +1,43 @@
-mod clicker;
-use clicker::clicker::Clicker;
+use std::{
+    sync::{ Arc, Mutex, },
+};
 
-mod input;
-use input::kbd_input::kbd_in;
+mod clicker;
+use clicker::Clicker;
+
+mod event;
+use event::kbd_event::{KbdEvent, KEY_PRESSED, KEY_REPEATED, KEY_RELEASED,};
+
 pub use input_event_codes::*;
 /* Frequency in Hz*/
-const FREQ_MEAN: f64 = 100f64;
+const FREQ_MEAN: f64 = 20f64;
 const PERIOD_SD_PROPORTION: f64 = 0.1f64;
 const MAX_SDS: f64 = 3f64;
 
 fn main() {
-    //let clicker = Clicker::new(FREQ_MEAN, PERIOD_SD_PROPORTION, MAX_SDS);
-    //let mut i = 0;
-    //while i < 10000 {
-    //    clicker.sleep_and_click();
-    //    i += 1;
-    //}
-    let mut kbd_in = kbd_in::new().expect("Failed to initialise reader, try 
-                                          running as root.");
-    loop {
-        match kbd_in.poll() {
-            Ok(_) => {
-                if kbd_in.pressed(KEY_R) {
-                    println!("R has been pressed!");
-                }
-                if kbd_in.released(KEY_R) {
-                    println!("R has been released!");
-                }
-                if kbd_in.repeated(KEY_R) {
-                    println!("R has been repeated!");
-                }
-            },
-            Err(_) => { println!("nothing pressed"); }
-        }
+    let done = Arc::new(Mutex::new(false));
+    let done_clone = done.clone();
+    let is_clicking = Arc::new(Mutex::new(false));
+    let is_clicking_clone = is_clicking.clone();
+    let mut event = KbdEvent::new();
+    event.add_event(KEY_R, 
+                    move || {
+                        let mut clicking = is_clicking_clone.lock().unwrap();
+                        *clicking = !*clicking;
+                    }, 
+                    KEY_PRESSED);
+    event.add_event(KEY_ESC, 
+                    move || {
+                        let mut d = done_clone.lock().unwrap();
+                        *d = true;
+                    }, 
+                    KEY_PRESSED);
+    
+    let clicker = Clicker::new(FREQ_MEAN, PERIOD_SD_PROPORTION, MAX_SDS);
+    event.start().unwrap();
+    while !(*done.lock().unwrap()){
+        if *is_clicking.lock().unwrap() { clicker.sleep_and_click(); }
+        else { clicker.sleep()};
     }
-
+    event.stop();
 }
