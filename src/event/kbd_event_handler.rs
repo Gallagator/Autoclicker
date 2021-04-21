@@ -12,9 +12,9 @@ use libc::input_event;
 
 pub use input_event_codes::*;
 
-const KEY_RELEASE: i32 = 0;
-const KEY_PRESS: i32 = 1;
-const KEY_REPEAT: i32 = 2;
+const KEY_RELEASED: i32 = 0;
+const KEY_PRESSED: i32 = 1;
+const KEY_REPEATED: i32 = 2;
 
 #[macro_export]
 macro_rules! BIT {
@@ -24,9 +24,13 @@ macro_rules! BIT {
 }
 
 pub type KeyFlags = u8;
-pub const KEY_RELEASED: KeyFlags = BIT!(0);
-pub const KEY_PRESSED:  KeyFlags = BIT!(1);
-pub const KEY_REPEATED: KeyFlags = BIT!(2);
+pub const KBD_RELEASED: KeyFlags = BIT!(0);
+pub const KBD_PRESSED : KeyFlags = BIT!(1);
+pub const KBD_REPEATED: KeyFlags = BIT!(2);
+pub const KBD_SHIFT   : KeyFlags = BIT!(3);
+pub const KBD_CTRL    : KeyFlags = BIT!(4);
+pub const KBD_ALT     : KeyFlags = BIT!(4);
+
 
 
 pub type KbdEventHandler = Handler;
@@ -103,29 +107,13 @@ impl KbdEventHandler {
         self.key_press = unsafe { mem::transmute(buf) };
         Ok(())
     }
-
-   // fn pressed(&self, key: u16) -> bool {
-   //     return self.key_press.type_ == EV_KEY
-   //         && self.key_press.code == key
-   //         && self.key_press.value == KEY_PRESSED;
-   // }
-   // fn released(&self, key: u16) -> bool {
-   //     return self.key_press.type_ == EV_KEY
-   //         && self.key_press.code == key
-   //         && self.key_press.value == KEY_RELEASED;
-   // }
-   // fn repeated(&self, key: u16) -> bool {
-   //     return self.key_press.type_ == EV_KEY
-   //         && self.key_press.code == key
-   //         && self.key_press.value == KEY_REPEATED;
-   // }
 }
 
 fn key_val_to_flag(val: i32) -> u8 {
     match val {
-        KEY_RELEASE => KEY_RELEASED,
-        KEY_PRESS => KEY_PRESSED,
-        KEY_REPEAT => KEY_REPEATED,
+        KEY_RELEASED => KBD_RELEASED,
+        KEY_PRESSED  => KBD_PRESSED,
+        KEY_REPEATED => KBD_REPEATED,
         _ => 0,
     }
 }

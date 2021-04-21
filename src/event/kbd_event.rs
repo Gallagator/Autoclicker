@@ -9,9 +9,9 @@ use std::{
 use super::kbd_event_handler::{self, KbdEventHandler,};
 pub use super::kbd_event_handler::{
     KeyFlags,
-    KEY_RELEASED,
-    KEY_PRESSED,
-    KEY_REPEATED,
+    KBD_RELEASED,
+    KBD_PRESSED,
+    KBD_REPEATED,
 };
 
 pub type KbdEvent = Event;
@@ -49,8 +49,8 @@ impl KbdEvent {
     }
 
     pub fn alter_event(&mut self, key: u16, flags: KeyFlags) {
-        debug_assert!(flags == KEY_PRESSED || flags == KEY_REPEATED 
-                      || flags == KEY_RELEASED); 
+        debug_assert!(flags == KBD_PRESSED || flags == KBD_REPEATED 
+                      || flags == KBD_RELEASED); 
         self.controller
             .lock()
             .unwrap()

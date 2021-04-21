@@ -6,9 +6,10 @@ mod clicker;
 use clicker::Clicker;
 
 mod event;
-use event::kbd_event::{KbdEvent, KEY_PRESSED, KEY_REPEATED, KEY_RELEASED,};
+use event::kbd_event::{KbdEvent, KBD_PRESSED, KBD_REPEATED, KBD_RELEASED,};
 
 pub use input_event_codes::*;
+
 /* Frequency in Hz*/
 const FREQ_MEAN: f64 = 20f64;
 const PERIOD_SD_PROPORTION: f64 = 0.1f64;
@@ -25,13 +26,13 @@ fn main() {
                         let mut clicking = is_clicking_clone.lock().unwrap();
                         *clicking = !*clicking;
                     }, 
-                    KEY_PRESSED);
+                    KBD_PRESSED);
     event.add_event(KEY_ESC, 
                     move || {
                         let mut d = done_clone.lock().unwrap();
                         *d = true;
                     }, 
-                    KEY_PRESSED);
+                    KBD_PRESSED);
     
     let clicker = Clicker::new(FREQ_MEAN, PERIOD_SD_PROPORTION, MAX_SDS);
     event.start().unwrap();
