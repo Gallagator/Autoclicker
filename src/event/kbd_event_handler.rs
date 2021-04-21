@@ -29,8 +29,8 @@ pub const KBD_PRESSED : KeyFlags = BIT!(1);
 pub const KBD_REPEATED: KeyFlags = BIT!(2);
 pub const KBD_SHIFT   : KeyFlags = BIT!(3);
 pub const KBD_CTRL    : KeyFlags = BIT!(4);
-pub const KBD_ALT     : KeyFlags = BIT!(4);
-
+pub const KBD_ALT     : KeyFlags = BIT!(5);
+pub const KBD_ANY     : KeyFlags = BIT!(6);
 
 
 pub type KbdEventHandler = Handler;
@@ -41,6 +41,9 @@ pub struct Handler {
     /* Arc-Mutex needed to share controller between threads */
     controller: Arc<Mutex<Controller>>, 
     handles: Vec<thread::JoinHandle<Option<()>>>, /* Handles on the Child threads */
+    shift_presses: u8,
+    ctrl_presses: u8,
+    alt_presses: u8,
 }
 
 /* Must be boxed since the trait's size in unknown */
@@ -59,7 +62,10 @@ impl KbdEventHandler {
             kbd_file: File::open("/dev/input/event0")?,
             controller,
             handles: Vec::new(),
-        })
+            shift_presses: 0,
+            ctrl_presses: 0,
+            alt_presses: 0,
+    })
     }
     /* This function is to run in another thread so it takes full ownership of
      * self */
@@ -71,7 +77,7 @@ impl KbdEventHandler {
             /* Continues if the key_press is not in the map. Stops creation 
              * of a needless thread. */
             if self.key_press.type_ != EV_KEY {continue;}
-            if let None = &self.controller
+            if let None = &self.controller //TODO check the kind of key_press
                                .lock()
                                .unwrap()
                                .actions

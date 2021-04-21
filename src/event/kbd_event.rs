@@ -12,6 +12,10 @@ pub use super::kbd_event_handler::{
     KBD_RELEASED,
     KBD_PRESSED,
     KBD_REPEATED,
+    KBD_SHIFT,
+    KBD_CTRL,
+    KBD_ALT,
+    KBD_ANY,
 };
 
 pub type KbdEvent = Event;

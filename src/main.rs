@@ -6,7 +6,7 @@ mod clicker;
 use clicker::Clicker;
 
 mod event;
-use event::kbd_event::{KbdEvent, KBD_PRESSED, KBD_REPEATED, KBD_RELEASED,};
+use event::kbd_event::*;
 
 pub use input_event_codes::*;
 
