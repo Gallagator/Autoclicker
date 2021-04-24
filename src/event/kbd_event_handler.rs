@@ -3,8 +3,7 @@ use std::{
     fs::File,
     io::Read,
     mem,
-    sync::{Arc, Mutex},
-    cell::RefCell,
+    sync::{Arc, RwLock},
     thread,
 };
 
@@ -39,7 +38,7 @@ pub struct Handler {
     key_press: input_event,
     kbd_file: File, /* TODO Find this file manually */
     /* Arc-Mutex needed to share controller between threads */
-    controller: Arc<Mutex<Controller>>, 
+    controller: Arc<RwLock<Controller>>, 
     handles: Vec<thread::JoinHandle<Option<()>>>, /* Handles on the Child threads */
     shift_presses: u8,
     ctrl_presses: u8,
@@ -48,7 +47,7 @@ pub struct Handler {
 
 /* Must be boxed since the trait's size in unknown */
 type Task = Box<dyn Fn() + Sync + Send>;
-type TaskMap = HashMap<u16, (Task, RefCell<KeyFlags>)>;
+type TaskMap = HashMap<u16, (Task, KeyFlags)>;
 
 pub struct Controller {
     pub actions: TaskMap,
@@ -56,7 +55,7 @@ pub struct Controller {
 }
 
 impl KbdEventHandler {
-    pub fn new(controller: Arc<Mutex<Controller>>) -> std::io::Result<KbdEventHandler> {
+    pub fn new(controller: Arc<RwLock<Controller>>) -> std::io::Result<KbdEventHandler> {
         Ok(Handler {
             key_press: unsafe { mem::zeroed() },
             kbd_file: File::open("/dev/input/event0")?,
@@ -70,7 +69,7 @@ impl KbdEventHandler {
     /* This function is to run in another thread so it takes full ownership of
      * self */
     pub fn start(mut self) {
-        while !self.controller.lock().unwrap().done {
+        while !self.controller.read().unwrap().done {
             self.poll().unwrap(); /* polling should never fail. */
             let key_code = self.key_press.code;
             let key_value = self.key_press.value;  
@@ -78,7 +77,7 @@ impl KbdEventHandler {
              * of a needless thread. */
             if self.key_press.type_ != EV_KEY {continue;}
             if let None = &self.controller //TODO check the kind of key_press
-                               .lock()
+                               .read()
                                .unwrap()
                                .actions
                                .get(&key_code) 
@@ -89,12 +88,12 @@ impl KbdEventHandler {
              * since another thread may have updated the actions HashMap */
             let handle = thread::spawn(move || {
                 child_controller
-                    .lock()
+                    .read()
                     .unwrap()
                     .actions
                     .get(&key_code)
                     .map(|f| 
-                         if (key_val_to_flag(key_value) & *f.1.borrow()) > 0 { 
+                         if (key_val_to_flag(key_value) & f.1) > 0 { 
                              f.0() 
                          })
             });

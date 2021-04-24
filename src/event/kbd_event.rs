@@ -1,9 +1,8 @@
 use std::{
     collections::HashMap,
     debug_assert,
-    sync::{Arc, Mutex},
+    sync::{Arc, RwLock},
     thread,
-    cell::RefCell,
 };
 
 use super::kbd_event_handler::{self, KbdEventHandler,};
@@ -21,7 +20,7 @@ pub use super::kbd_event_handler::{
 pub type KbdEvent = Event;
 
 pub struct Event {
-    controller: Arc<Mutex<kbd_event_handler::Controller>>,
+    controller: Arc<RwLock<kbd_event_handler::Controller>>,
     kbd_event_handler_child: Option<thread::JoinHandle<()>>,
 }
 
@@ -36,7 +35,7 @@ impl KbdEvent {
             done: false,
         };
         Event {
-            controller: Arc::new(Mutex::new(controller)),
+            controller: Arc::new(RwLock::new(controller)),
             kbd_event_handler_child: None,
         }
     }
@@ -46,27 +45,27 @@ impl KbdEvent {
         F: Fn() + Sync + Send,
     {
         self.controller
-            .lock()
+            .write()
             .unwrap()
             .actions
-            .insert(key, (Box::new(f), RefCell::new(flags)));
+            .insert(key, (Box::new(f), flags));
     }
 
     pub fn alter_event(&mut self, key: u16, flags: KeyFlags) {
         debug_assert!(flags == KBD_PRESSED || flags == KBD_REPEATED 
                       || flags == KBD_RELEASED); 
         self.controller
-            .lock()
+            .write()
             .unwrap()
             .actions
-            .get(&key)
-            .map(|f| *f.1.borrow_mut() = flags);
+            .get_mut(&key)
+            .map(|f| f.1 = flags);
 
     }
     
     pub fn remove_event(&mut self, key: u16) {
         self.controller
-            .lock()
+            .write()
             .unwrap()
             .actions
             .remove(&key);
@@ -83,7 +82,7 @@ impl KbdEvent {
 
     pub fn stop(&mut self) {
         //debug_assert!(self.kbd_event_handler_child.map_or(false, |_| true));
-        self.controller.lock().unwrap().done = true;
+        self.controller.write().unwrap().done = true;
         self.kbd_event_handler_child
             .take()
             .map(|handle| handle.join().unwrap());

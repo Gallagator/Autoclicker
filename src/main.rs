@@ -12,7 +12,7 @@ pub use input_event_codes::*;
 
 /* Frequency in Hz*/
 const FREQ_MEAN: f64 = 20f64;
-const PERIOD_SD_PROPORTION: f64 = 0.1f64;
+const PERIOD_SD_PROPORTION: f64 = 0.4f64;
 const MAX_SDS: f64 = 3f64;
 
 fn main() {
