@@ -4,12 +4,12 @@ use std::{
     io::Read,
     mem,
     sync::{Arc, RwLock},
-    thread,
 };
-
 use libc::input_event;
-
 pub use input_event_codes::*;
+use threadpool::ThreadPool;
+
+const N_WORKER_THREADS: usize = 4;
 
 const KEY_RELEASED: i32 = 0;
 const KEY_PRESSED: i32 = 1;
@@ -36,10 +36,10 @@ pub type KbdEventHandler = Handler;
 
 pub struct Handler {
     key_press: input_event,
-    kbd_file: File, /* TODO Find this file manually */
+    kbd_file: File, /* TODO Find this file automatically */
     /* Arc-Mutex needed to share controller between threads */
     controller: Arc<RwLock<Controller>>, 
-    handles: Vec<thread::JoinHandle<Option<()>>>, /* Handles on the Child threads */
+    pool: ThreadPool,
     shift_presses: u8,
     ctrl_presses: u8,
     alt_presses: u8,
@@ -60,7 +60,7 @@ impl KbdEventHandler {
             key_press: unsafe { mem::zeroed() },
             kbd_file: File::open("/dev/input/event0")?,
             controller,
-            handles: Vec::new(),
+            pool: ThreadPool::new(N_WORKER_THREADS),
             shift_presses: 0,
             ctrl_presses: 0,
             alt_presses: 0,
@@ -86,7 +86,7 @@ impl KbdEventHandler {
             let child_controller = Arc::clone(&self.controller);
             /* Creates the thread. Still has to check map for the closure
              * since another thread may have updated the actions HashMap */
-            let handle = thread::spawn(move || {
+            self.pool.execute(move || {
                 child_controller
                     .read()
                     .unwrap()
@@ -95,14 +95,11 @@ impl KbdEventHandler {
                     .map(|f| 
                          if (key_val_to_flag(key_value) & f.1) > 0 { 
                              f.0() 
-                         })
+                         });
             });
-            self.handles.push(handle);
         }
         /* Must wait for all child threads to finish */
-        for handle in self.handles {
-            handle.join().unwrap();
-        }
+        self.pool.join(); 
     }
     
     /* Reads keyboard device file */
