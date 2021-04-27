@@ -9,7 +9,7 @@ use libc::input_event;
 pub use input_event_codes::*;
 use threadpool::ThreadPool;
 
-const N_WORKER_THREADS: usize = 4;
+const N_WORKER_THREADS: usize = 7;
 
 const KEY_RELEASED: i32 = 0;
 const KEY_PRESSED: i32 = 1;

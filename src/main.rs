@@ -1,5 +1,6 @@
 use std::{
-    sync::{ Arc, Mutex, },
+    sync::Arc,
+    sync::Mutex,
 };
 
 mod clicker;
@@ -11,7 +12,7 @@ use event::kbd_event::*;
 pub use input_event_codes::*;
 
 /* Frequency in Hz*/
-const FREQ_MEAN: f64 = 20f64;
+const FREQ_MEAN: f64 = 30f64;
 const PERIOD_SD_PROPORTION: f64 = 0.4f64;
 const MAX_SDS: f64 = 3f64;
 

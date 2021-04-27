@@ -17,4 +17,4 @@ libc = "0.2.93"
 input-event-codes = "0.2.1"
 
 #threading
-rayon = "1.5.0"
+threadpool = "1.8.1"
